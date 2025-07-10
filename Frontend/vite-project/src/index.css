@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+
+body {
+  font-family: 'Fira Code', sans-serif;
+}
+body, html {
+  margin: 0;
+  padding: 0;
+}
