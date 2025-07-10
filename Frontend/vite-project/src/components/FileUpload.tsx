@@ -3,7 +3,7 @@ import React, { useRef, useState } from "react";
 import { motion } from "motion/react";
 import { IconUpload } from "@tabler/icons-react";
 import { useDropzone } from "react-dropzone";
-
+import Button from "./Button";
 const mainVariant = {
   initial: {
     x: 0,
@@ -31,11 +31,39 @@ export const FileUpload = ({
   onChange?: (files: File[]) => void;
 }) => {
   const [files, setFiles] = useState<File[]>([]);
+  const [response, setResponse] = useState<string | null>(null); // Add state for LLM response
+  const [button,setButton] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+
+  // Function to send file to /analyze endpoint
+  const analyzeFile = async (file: File) => {
+    const formData = new FormData();
+    formData.append("image", file); // <-- Fix: use "image" as the key
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/analyze/`, {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || "Failed to analyze file");
+      }
+      const data = await res.json();
+      setResponse(data.summary || JSON.stringify(data)); // Show summary or all data
+      setButton(true);
+    } catch (err: any) {
+      setResponse("Error analyzing file: " + err.message);
+    }
+  };
 
   const handleFileChange = (newFiles: File[]) => {
     setFiles((prevFiles) => [...prevFiles, ...newFiles]);
     onChange && onChange(newFiles);
+    if (newFiles.length > 0) {
+      analyzeFile(newFiles[0]); // Only send the first file (since multiple: false)
+    }
   };
 
   const handleClick = () => {
@@ -105,6 +133,7 @@ export const FileUpload = ({
                     </motion.p>
                   </div>
 
+                  {/* SUN element */}
                   <div className="flex text-sm md:flex-row flex-col items-start md:items-center w-full mt-2 justify-between text-neutral-600 dark:text-neutral-400">
                     <motion.p
                       initial={{ opacity: 0 }}
@@ -162,6 +191,17 @@ export const FileUpload = ({
               ></motion.div>
             )}
           </div>
+          {response && (
+            <>
+              <div className="mt-6 p-4 rounded bg-gray-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200">
+                <strong>Analysis Result:</strong>
+                <pre className="whitespace-pre-wrap break-words">{response}</pre>
+              </div>
+              <Button className="mt-4">
+                Continue
+              </Button>
+            </>
+          )}
         </div>
       </motion.div>
     </div>

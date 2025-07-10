@@ -1,32 +1,17 @@
-import './App.css'
-import Navbar, { NavBody, NavItems, NavbarLogo, NavbarButton } from './components/Navbar'
-import ChatApp from './components/ChatApp';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from './pages/Home';
+// import OtherPage from './pages/OtherPage'; // add other pages here
 
 function App() {
-
-  // Example nav items
-  const navItems = [
-    { name: "Home", link: "#" },
-    { name: "About", link: "#" },
-    { name: "Contact", link: "#" }
-  ];
-
   return (
-    <div className='bg-gray-900 min-h-screen flex flex-col p-0 m-0'>
-      <Navbar>
-        <NavBody >
-          <NavbarLogo />
-          <NavItems items={navItems} />
-          <NavbarButton href="#" variant="dark" className='bg-gray-800'>Sign Up</NavbarButton>
-        </NavBody>
-      </Navbar>
-      <div className='flex justify-center items-center flex-grow  p-0 m-0'> 
-      <ChatApp />
-      </div>
-      {/* Temporary tall div for scroll testing */}
-      <div style={{ height: '150vh' }} />
-    </div>
-  )
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        {/* <Route path="/other" element={<OtherPage />} /> */}
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
+export default App;
