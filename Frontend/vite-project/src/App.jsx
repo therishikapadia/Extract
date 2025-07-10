@@ -1,6 +1,6 @@
 import './App.css'
 import Navbar, { NavBody, NavItems, NavbarLogo, NavbarButton } from './components/Navbar'
-import FileUpload,{GridPattern} from './components/FileUpload'
+import ChatApp from './components/ChatApp';
 
 function App() {
 
@@ -21,10 +21,8 @@ function App() {
         </NavBody>
       </Navbar>
       <div className='flex justify-center items-center flex-grow  p-0 m-0'> 
-      <FileUpload className='border border-red-500' >
-      <GridPattern />
-        </FileUpload>
-        </div>
+      <ChatApp />
+      </div>
       {/* Temporary tall div for scroll testing */}
       <div style={{ height: '150vh' }} />
     </div>
