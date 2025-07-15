@@ -7,6 +7,7 @@ import {
   useScroll,
   useMotionValueEvent,
 } from "motion/react";
+import img from "../assets/logo.jpg";
 
 import React, { useRef, useState } from "react";
 
@@ -34,7 +35,7 @@ export const Navbar = ({
     <motion.div
       ref={ref}
       // Changed to fixed for always-on-top
-      className={cn("sticky inset-x-0 top-0 z-40 w-full bg-neutral-950/80", className)}>
+      className={cn("sticky inset-x-0 top-0 z-200 w-full ", className)}>
       {React.Children.map(children, (child) =>
         React.isValidElement(child)
           ? React.cloneElement(child, { visible } as any)
@@ -193,11 +194,11 @@ export const NavbarLogo = () => {
       href="#"
       className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-black">
       <img
-        src="https://assets.aceternity.com/logo-dark.png"
+        src={img}
         alt="logo"
         width={30}
         height={30} />
-      <span className="font-medium text-black dark:text-white">Startup</span>
+      <span className="font-medium text-black dark:text-white">NutriMind</span>
     </a>
   );
 };
