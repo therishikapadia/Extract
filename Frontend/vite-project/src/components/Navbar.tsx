@@ -35,7 +35,7 @@ export const Navbar = ({
     <motion.div
       ref={ref}
       // Changed to fixed for always-on-top
-      className={cn("sticky inset-x-0 top-0 z-40 w-full bg-neutral-950/80", className)}>
+      className={cn("sticky inset-x-0 top-0 z-200 w-full ", className)}>
       {React.Children.map(children, (child) =>
         React.isValidElement(child)
           ? React.cloneElement(child, { visible } as any)

@@ -121,6 +121,67 @@ def analyze_food_label(request):
         logger.error(f"Error in analyze_food_label: {str(e)}")
         return JsonResponse({'error': f'Analysis failed: {str(e)}'}, status=500)
 
+@csrf_exempt
+@require_http_methods(["POST"])
+def chat_followup(request):
+    """
+    Handle follow-up health-related questions about a previously analyzed label.
+    Expects: {
+        'analysis_id': ...,
+        'question': ...,
+        'history': [...],  # optional, list of previous Q&A
+    }
+    """
+    try:
+        data = json.loads(request.body)
+        analysis_id = data.get('analysis_id')
+        question = data.get('question')
+        history = data.get('history', [])
+
+        if not analysis_id or not question:
+            return JsonResponse({'error': 'Missing analysis_id or question'}, status=400)
+
+        # Fetch the analysis object
+        from .models import FoodAnalysis
+        try:
+            analysis = FoodAnalysis.objects.get(id=analysis_id)
+        except FoodAnalysis.DoesNotExist:
+            return JsonResponse({'error': 'Analysis not found'}, status=404)
+
+        # Compose context for the LLM
+        context = {
+            'extracted_text': analysis.extracted_text,
+            'ingredients': analysis.ingredients_text,
+            'nutrition_info': analysis.nutrition_text,
+            'previous_qa': history
+        }
+
+        # Compose a prompt for the LLM
+        prompt = (
+            f"You are a nutritionist. Here is the food label info:\n"
+            f"EXTRACTED TEXT: {context['extracted_text']}\n"
+            f"INGREDIENTS: {context['ingredients']}\n"
+            f"NUTRITION: {context['nutrition_info']}\n"
+        )
+        if history:
+            prompt += "\nPrevious Q&A:\n"
+            for qa in history:
+                prompt += f"Q: {qa.get('question','')}\nA: {qa.get('answer','')}\n"
+        prompt += f"\nUser's follow-up question: {question}\n"
+        prompt += (
+            "Answer ONLY if the question is about health, nutrition, or ingredients. "
+            "If not, reply: 'I'm here to answer health-related questions about this product.'"
+        )
+
+        # Call the LLM
+        analyzer_service = get_food_analyzer_service()
+        answer = analyzer_service.llm(prompt)
+
+        return JsonResponse({'answer': answer})
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
 @require_http_methods(["GET"])
 def health_check(request):
     """Health check endpoint"""

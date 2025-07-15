@@ -4,6 +4,9 @@ import { motion } from "motion/react";
 import { IconUpload } from "@tabler/icons-react";
 import { useDropzone } from "react-dropzone";
 import Button from "./Button";
+import { Dialog } from "@headlessui/react";
+import AuthForm from "./AuthForm";
+import { useNavigate } from "react-router-dom";
 const mainVariant = {
   initial: {
     x: 0,
@@ -35,9 +38,18 @@ export const FileUpload = ({
   const [button,setButton] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [theme, setTheme] = useState(() => {
+    const stored = localStorage.getItem("theme");
+    if (stored) return stored;
+    return window.matchMedia("(prefers-color-scheme:dark)").matches ? "dark" : "light";
+  });
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
   // Function to send file to /analyze endpoint
   const analyzeFile = async (file: File) => {
+    setIsLoading(true);
     const formData = new FormData();
     formData.append("image", file); // <-- Fix: use "image" as the key
 
@@ -52,9 +64,15 @@ export const FileUpload = ({
       }
       const data = await res.json();
       setResponse(data.summary || JSON.stringify(data)); // Show summary or all data
+      console.log(data);
       setButton(true);
+      sessionStorage.setItem("analysisResult", data.summary || JSON.stringify(data));
+      sessionStorage.setItem("analysisFull", JSON.stringify(data));
+      if (data.analysis_id) sessionStorage.setItem("analysisId", data.analysis_id);
     } catch (err: any) {
       setResponse("Error analyzing file: " + err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -70,6 +88,31 @@ export const FileUpload = ({
     fileInputRef.current?.click();
   };
 
+  const handleUploadAreaClick = (e: React.MouseEvent) => {
+    // Only trigger file input if not clicking on a button or inside the modal
+    if (isAuthOpen) return;
+    // Prevent file input if clicking on a button
+    const target = e.target as HTMLElement;
+    if (target.closest('button')) return;
+    fileInputRef.current?.click();
+  };
+
+  const handleAuthSuccess = () => {
+    // Store file in sessionStorage for ChatApp to retrieve
+    if (files.length > 0) {
+      const file = files[0];
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        sessionStorage.setItem("uploadedFile", e.target?.result as string);
+        navigate("/chat");
+      };
+      reader.readAsDataURL(file);
+    } else {
+      navigate("/chat");
+    }
+    setIsAuthOpen(false);
+  };
+
   const { getRootProps, isDragActive } = useDropzone({
     multiple: false,
     noClick: true,
@@ -82,7 +125,7 @@ export const FileUpload = ({
   return (
     <div className="w-full" {...getRootProps()}>
       <motion.div
-        onClick={handleClick}
+        onClick={handleUploadAreaClick}
         whileHover="animate"
         className="p-10 group/file block rounded-lg cursor-pointer w-full relative overflow-hidden"
       >
@@ -191,15 +234,34 @@ export const FileUpload = ({
               ></motion.div>
             )}
           </div>
-          {response && (
+          {isLoading && !response && (
+            <div className="mt-6 p-4 z-20 rounded bg-gray-50 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-300 w-full  mx-auto">
+              <div className="h-6 w-1/2 bg-gray-200 dark:bg-neutral-800 rounded mb-4 animate-pulse" />
+              <div className="h-4 w-full bg-gray-200 dark:bg-neutral-800 rounded mb-2 animate-pulse" />
+              <div className="h-4 w-2/3 bg-gray-200 dark:bg-neutral-800 rounded mb-2 animate-pulse" />
+              <div className="h-4 w-1/3 bg-gray-200 dark:bg-neutral-800 rounded animate-pulse" />
+              <div className="mt-4 text-neutral-400">Analyzing label...</div>
+            </div>
+          )}
+          {response && !isLoading && (
             <>
-              <div className="mt-6 p-4 rounded bg-gray-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200">
+              <div className="mt-6 p-4 z-20 rounded bg-gray-50 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-300 w-full mx-auto">
                 <strong>Analysis Result:</strong>
+                console.log(response)
                 <pre className="whitespace-pre-wrap break-words">{response}</pre>
               </div>
-              <Button className="mt-4">
-                Continue
+              <Button className="mt-4 z-20" onClick={() => setIsAuthOpen(true)}>
+                Login to continue
               </Button>
+              <Dialog open={isAuthOpen} onClose={() => setIsAuthOpen(false)} className="fixed z-50 inset-0 overflow-y-auto">
+                <div className="flex items-center justify-center min-h-screen px-4">
+                  <div className="fixed inset-0 bg-black opacity-30" aria-hidden="true" />
+                  <div className="relative bg-white dark:bg-neutral-900 rounded-xl shadow-xl p-6 w-full max-w-md z-50">
+                    <AuthForm theme={theme} setTheme={setTheme} onAuthSuccess={handleAuthSuccess} />
+                    <button className="absolute top-2 right-2 text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200" onClick={() => setIsAuthOpen(false)}>&times;</button>
+                  </div>
+                </div>
+              </Dialog>
             </>
           )}
         </div>
