@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import AuthForm from './components/AuthForm';
 import ChatApp from './components/ChatApp';
+import ChatWithSidebar from './pages/ChatWithSidebar';
 function App() {
  const [theme, setTheme] = useState(() => {
   const stored = localStorage.getItem("theme");
@@ -26,7 +27,7 @@ function App() {
       <Routes>
         <Route path="/" element={<AuthForm theme={theme} setTheme={setTheme} />} />
         <Route path="/H" element={<Home theme={theme} setTheme={setTheme} />} />
-        <Route path="/chat" element={<ChatApp theme={theme} setTheme={setTheme} />} />
+        <Route path="/chat" element={<ChatWithSidebar theme={theme} setTheme={setTheme} />} />
       </Routes>
     </Router>
   );

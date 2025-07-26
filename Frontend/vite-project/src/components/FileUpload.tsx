@@ -247,7 +247,7 @@ export const FileUpload = ({
             <>
               <div className="mt-6 p-4 z-20 rounded bg-gray-50 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-300 w-full mx-auto">
                 <strong>Analysis Result:</strong>
-                console.log(response)
+                {/* console.log(response) */}
                 <pre className="whitespace-pre-wrap break-words">{response}</pre>
               </div>
               <Button className="mt-4 z-20" onClick={() => setIsAuthOpen(true)}>

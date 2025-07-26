@@ -7,7 +7,9 @@ import {
   useScroll,
   useMotionValueEvent,
 } from "motion/react";
-import img from "../assets/logo.jpg";
+
+import img from '../assets/logog.png';
+
 
 import React, { useRef, useState } from "react";
 
