@@ -11,6 +11,26 @@ const ChatApp = () => {
   const [analysisId, setAnalysisId] = useState(null);
   const fileInputRef = useRef(null);
   const chatBottomRef = useRef(null);
+  const [typingIndex, setTypingIndex] = useState(null); // index of message being typed
+  const [typingContent, setTypingContent] = useState(''); // current content being typed
+
+  // Typing effect for LLM responses
+  const startTypingEffect = (fullText, msgIndex, type = 'markdown') => {
+    setTypingIndex(msgIndex);
+    setTypingContent('');
+    let i = 0;
+    const typeChar = () => {
+      setTypingContent(fullText.slice(0, i + 1));
+      if (i < fullText.length - 1) {
+        i++;
+        setTimeout(typeChar, 12); // typing speed (ms per char)
+      } else {
+        setTypingIndex(null);
+        setTypingContent('');
+      }
+    };
+    typeChar();
+  };
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -30,8 +50,18 @@ const ChatApp = () => {
         throw new Error(errData.error || "Failed to analyze file");
       }
       const data = await res.json();
-      const summary = data.summary || data.analysis || JSON.stringify(data);
-      setMessages((prev) => [...prev, { role: 'llm', type: 'markdown', content: summary }]);
+      // Show full analysis (not just summary) when uploading from /chat
+      let fullOutput = '';
+      if (data.analysis) {
+        fullOutput = typeof data.analysis === 'string' ? data.analysis : JSON.stringify(data.analysis, null, 2);
+      } else {
+        fullOutput = JSON.stringify(data, null, 2);
+      }
+      setMessages((prev) => {
+        const idx = prev.length;
+        setTimeout(() => startTypingEffect(fullOutput, idx, 'markdown'), 100);
+        return [...prev, { role: 'llm', type: 'markdown', content: '' }];
+      });
       if (data.analysis_id) setAnalysisId(data.analysis_id);
       sessionStorage.setItem("analysisResult", summary);
       sessionStorage.setItem("analysisFull", JSON.stringify(data));
@@ -78,7 +108,12 @@ const ChatApp = () => {
       });
       const data = await res.json();
       if (data.answer) {
-        setMessages((prev) => [...prev, { role: 'llm', type: 'markdown', content: data.answer }]);
+        // Add empty message, then type it out
+        setMessages((prev) => {
+          const idx = prev.length;
+          setTimeout(() => startTypingEffect(data.answer, idx, 'markdown'), 100);
+          return [...prev, { role: 'llm', type: 'markdown', content: '' }];
+        });
       } else {
         setMessages((prev) => [...prev, { role: 'llm', type: 'text', content: data.error || 'No answer from LLM.' }]);
       }
@@ -91,6 +126,19 @@ const ChatApp = () => {
   React.useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isAwaiting]);
+
+  // Typing effect: update message content as it types
+  React.useEffect(() => {
+    if (typingIndex !== null && typingContent !== "") {
+      setMessages((prev) => {
+        if (!prev[typingIndex]) return prev;
+        const updated = [...prev];
+        updated[typingIndex] = { ...updated[typingIndex], content: typingContent };
+        return updated;
+      });
+    }
+    // eslint-disable-next-line
+  }, [typingContent]);
 
   React.useEffect(() => {
     const uploadedFile = sessionStorage.getItem("uploadedFile");
@@ -157,8 +205,9 @@ const ChatApp = () => {
         ))}
         {isAwaiting && (
           <div className="flex justify-start">
-            <div className="max-w-xs md:max-w-md px-4 py-2 rounded-2xl shadow-md bg-neutral-900 text-neutral-400 border border-neutral-800 animate-pulse">
-              LLM is typing...
+            <div className="max-w-xs md:max-w-md px-4 py-2 rounded-2xl shadow-md
+             bg-neutral-900 text-neutral-400 border border-neutral-800 animate-pulse">
+              Analysing...
             </div>
           </div>
         )}
