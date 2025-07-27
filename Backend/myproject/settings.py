@@ -22,7 +22,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'analyzer',
-    'myap'
+    'rest_framework',
+    'rest_framework_simplejwt',
 ]
 
 MIDDLEWARE = [
@@ -62,15 +63,13 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'your_db_name',
-        'USER': 'your_db_user',
-        'PASSWORD': 'your_db_password',
+        'NAME': 'postgres',
+        'USER': 'rishikapadia',
+        'PASSWORD': 'password',
         'HOST': 'localhost',
         'PORT': '5432',
     }
 }
-
-AUTH_USER_MODEL = 'myap.User'
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -119,5 +118,11 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
 
 # Ollama settings
-OLLAMA_MODEL = 'llama3.2:latest'  # Change this to your preferred model
-OLLAMA_BASE_URL = 'http://localhost:11434'  # Default Ollama URL
+OLLAMA_MODEL = 'llama3.2:latest'  
+OLLAMA_BASE_URL = 'http://localhost:11434' 
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}

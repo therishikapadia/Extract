@@ -12,6 +12,9 @@ from .models import FoodAnalysis, AnalysisSession
 from .services import get_food_analyzer_service
 import os
 import tempfile
+from rest_framework import generics
+from .serializers import UserSignupSerializer
+from django.contrib.auth import get_user_model
 
 logger = logging.getLogger(__name__)
 
@@ -259,3 +262,7 @@ def get_client_ip(request):
     else:
         ip = request.META.get('REMOTE_ADDR')
     return ip
+
+class SignupView(generics.CreateAPIView):
+    queryset = get_user_model().objects.all()
+    serializer_class = UserSignupSerializer

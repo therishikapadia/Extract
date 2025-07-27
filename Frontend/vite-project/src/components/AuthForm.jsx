@@ -1,89 +1,132 @@
 import { useState } from 'react';
+import toast from 'react-hot-toast';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
-export default function AuthForm({ theme, setTheme, onAuthSuccess }) {
+export default function AuthForm({ onAuthSuccess, onClose, theme }) {
+  const [form, setForm] = useState({ username: '', email: '', password: '' });
   const [isLogin, setIsLogin] = useState(true);
-  const [form, setForm] = useState({ email: '', password: '', username: '' });
+  const [error, setError] = useState('');
 
-  const toggleTheme = () => {
-    setTheme((prev) => {
-      const next = prev === 'dark' ? 'light' : 'dark';
-      console.log('Toggling theme to:', next);
-      return next;
-    });
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(isLogin ? 'Logging in:' : 'Signing up:', form);
-    // Simulate successful auth
-    if (onAuthSuccess) onAuthSuccess();
+    setError('');
+    try {
+      if (isLogin) {
+        // Login: use JWT endpoint
+        const res = await fetch(`${API_BASE_URL}/api/token/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: form.username,
+            password: form.password,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Login failed');
+        localStorage.setItem('token', data.access);
+        toast.success('Login successful!');
+        if (onAuthSuccess) onAuthSuccess();
+      } else {
+        // Signup
+        const res = await fetch(`${API_BASE_URL}/api/signup/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        });
+        if (!res.ok) throw new Error('Signup failed');
+        toast.success('Signup successful! Please log in.');
+        setIsLogin(true);
+      }
+    } catch (err) {
+      setError(err.message || 'Something went wrong.');
+      toast.error(err.message || 'Something went wrong.');
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-neutral-900 transition-colors duration-300">
-      <div className=" bg-white dark:bg-neutral-900">
-
-      <div className="w-full max-w-md p-6 rounded-2xl shadow-lg bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 z-20">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold">
-            {isLogin ? 'Login' : 'Sign Up'}
-          </h2>
-          <button
-            onClick={toggleTheme}
-            className="text-sm underline hover:opacity-80"
-            type="button"
+    <form
+      onSubmit={handleSubmit}
+      className={`relative bg-neutral-900 text-neutral-100 shadow-xl rounded-lg px-8 pt-8 pb-6 w-full max-w-md mx-auto
+        ${theme === 'dark' ? 'bg-neutral-900 text-neutral-100' : 'bg-neutral-100 text-neutral-900'}
+      `}
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute top-2 right-2 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
+        aria-label="Close"
+      >
+        &times;
+      </button>
+      <h2 className="text-2xl font-bold mb-6 text-center">{isLogin ? 'Login' : 'Sign Up'}</h2>
+      {!isLogin && (
+        <input
+          className="mb-4 px-3 py-2 border border-neutral-700 rounded w-full bg-neutral-800 text-neutral-100"
+          placeholder="Username"
+          value={form.username}
+          onChange={e => setForm({ ...form, username: e.target.value })}
+          required
+        />
+      )}
+      {isLogin && (
+        <input
+          className="mb-4 px-3 py-2 border border-neutral-700 rounded w-full bg-neutral-800 text-neutral-100"
+          placeholder="Username or Email"
+          value={form.username}
+          onChange={e => setForm({ ...form, username: e.target.value })}
+          required
+        />
+      )}
+      {!isLogin && (
+        <input
+          className="mb-4 px-3 py-2 border border-neutral-700 rounded w-full bg-neutral-800 text-neutral-100"
+          type="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={e => setForm({ ...form, email: e.target.value })}
+          required
+        />
+      )}
+      <input
+        className="mb-4 px-3 py-2 border border-neutral-700 rounded w-full bg-neutral-800 text-neutral-100"
+        type="password"
+        placeholder="Password"
+        value={form.password}
+        onChange={e => setForm({ ...form, password: e.target.value })}
+        required
+      />
+      <button
+        type="submit"
+        className="w-full bg-neutral-700 text-neutral-100 py-2 rounded hover:bg-neutral-600 transition mb-2"
+      >
+        {isLogin ? 'Login' : 'Sign Up'}
+      </button>
+      <div className="text-center mb-2">
+        {isLogin ? (
+          <span>
+            Don’t have an account?{' '}
+            <button
+              type="button"
+              onClick={() => setIsLogin(false)}
+              className="text-blue-400 hover:underline"
             >
-            {theme === 'dark' ? '☀ Light Mode' : '🌙 Dark Mode'}
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {!isLogin && (
-            <input
-            type="text"
-            placeholder="Username"
-            className="w-full px-4 py-2 rounded bg-gray-100 dark:bg-neutral-800 placeholder-gray-500 dark:placeholder-neutral-500 text-neutral-900 dark:text-neutral-100"
-            value={form.username}
-            onChange={(e) => setForm({ ...form, username: e.target.value })}
-            required
-            />
-          )}
-          <input
-            type="email"
-            placeholder="Email"
-            className="w-full px-4 py-2 rounded bg-gray-100 dark:bg-neutral-800 placeholder-gray-500 dark:placeholder-neutral-500 text-neutral-900 dark:text-neutral-100"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            required
-            />
-          <input
-            type="password"
-            placeholder="Password"
-            className="w-full px-4 py-2 rounded bg-gray-100 dark:bg-neutral-800 placeholder-gray-500 dark:placeholder-neutral-500 text-neutral-900 dark:text-neutral-100"
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-            required
-            />
-          <button
-            type="submit"
-            className="w-full py-2 rounded bg-neutral-800 text-white hover:bg-neutral-700 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200 transition"
+              Sign up
+            </button>
+          </span>
+        ) : (
+          <span>
+            Already have an account?{' '}
+            <button
+              type="button"
+              onClick={() => setIsLogin(true)}
+              className="text-blue-400 hover:underline"
             >
-            {isLogin ? 'Login' : 'Sign Up'}
-          </button>
-        </form>
-
-        <p className="mt-4 text-center text-sm">
-          {isLogin ? 'Don’t have an account?' : 'Already have an account?'}{' '}
-          <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="underline text-blue-600 dark:text-blue-400"
-            type="button"
-            >
-            {isLogin ? 'Sign up' : 'Login'}
-          </button>
-        </p>
+              Login
+            </button>
+          </span>
+        )}
       </div>
-            </div>
-    </div>
+      {error && <div className="text-red-400 text-center">{error}</div>}
+    </form>
   );
 }

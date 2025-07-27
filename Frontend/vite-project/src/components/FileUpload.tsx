@@ -54,7 +54,7 @@ export const FileUpload = ({
     formData.append("image", file); // <-- Fix: use "image" as the key
 
     try {
-      const res = await fetch(`${API_BASE_URL}/analyze/`, {
+      const res = await fetch(`${API_BASE_URL}/api/analyze/`, {
         method: "POST",
         body: formData,
       });
@@ -127,7 +127,7 @@ export const FileUpload = ({
       <motion.div
         onClick={handleUploadAreaClick}
         whileHover="animate"
-        className="p-10 group/file block rounded-lg cursor-pointer w-full relative overflow-hidden"
+        className="p-10 group/file block rounded-lg cursor-pointer w-full relative overflow-hidden bg-black dark:bg-black"
       >
         <input
           ref={fileInputRef}
@@ -255,7 +255,7 @@ export const FileUpload = ({
               </Button>
               <Dialog open={isAuthOpen} onClose={() => setIsAuthOpen(false)} className="fixed z-50 inset-0 overflow-y-auto">
                 <div className="flex items-center justify-center min-h-screen px-4">
-                  <div className="fixed inset-0 bg-black opacity-30" aria-hidden="true" />
+                  <div className="fixed inset-0 bg-black" aria-hidden="true" />
                   <div className="relative bg-white dark:bg-neutral-900 rounded-xl shadow-xl p-6 w-full max-w-md z-50">
                     <AuthForm theme={theme} setTheme={setTheme} onAuthSuccess={handleAuthSuccess} />
                     <button className="absolute top-2 right-2 text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200" onClick={() => setIsAuthOpen(false)}>&times;</button>
