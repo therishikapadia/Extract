@@ -40,3 +40,18 @@ class AnalysisSession(models.Model):
     
     def __str__(self):
         return f"Session {self.session_id} - {self.total_analyses} analyses"
+    
+
+class Chat(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
+    is_title_auto_generated = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    analysis_id = models.CharField(max_length=100, blank=True, null=True) 
+
+class Message(models.Model):
+    chat = models.ForeignKey(Chat, on_delete=models.CASCADE)
+    role = models.CharField(max_length=10, choices=[('user', 'User'), ('llm', 'LLM')])
+    content = models.TextField()
+    image_url = models.URLField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)

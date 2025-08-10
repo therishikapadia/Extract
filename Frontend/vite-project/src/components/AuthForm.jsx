@@ -50,14 +50,14 @@ export default function AuthForm({ onAuthSuccess, onClose, theme }) {
         ${theme === 'dark' ? 'bg-neutral-900 text-neutral-100' : 'bg-neutral-100 text-neutral-900'}
       `}
     >
-      <button
+      {/* <button
         type="button"
         onClick={onClose}
         className="absolute top-2 right-2 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
         aria-label="Close"
       >
         &times;
-      </button>
+      </button> */}
       <h2 className="text-2xl font-bold mb-6 text-center">{isLogin ? 'Login' : 'Sign Up'}</h2>
       {!isLogin && (
         <input

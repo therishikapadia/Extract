@@ -33,44 +33,64 @@ const ChatApp = () => {
   };
 
   const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setMessages((prev) => [...prev, { role: 'user', type: 'image', content: file }]);
-    setImageUploaded(true);
-    setIsAwaiting(true);
-    try {
-      const formData = new FormData();
-      formData.append("image", file);
-      const res = await fetch(`${API_BASE_URL}/analyze/`, {
-        method: "POST",
-        body: formData,
-      });
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || "Failed to analyze file");
-      }
-      const data = await res.json();
-      // Show full analysis (not just summary) when uploading from /chat
-      let fullOutput = '';
-      if (data.analysis) {
-        fullOutput = typeof data.analysis === 'string' ? data.analysis : JSON.stringify(data.analysis, null, 2);
-      } else {
-        fullOutput = JSON.stringify(data, null, 2);
-      }
-      setMessages((prev) => {
-        const idx = prev.length;
-        setTimeout(() => startTypingEffect(fullOutput, idx, 'markdown'), 100);
-        return [...prev, { role: 'llm', type: 'markdown', content: '' }];
-      });
-      if (data.analysis_id) setAnalysisId(data.analysis_id);
-      sessionStorage.setItem("analysisResult", summary);
-      sessionStorage.setItem("analysisFull", JSON.stringify(data));
-      if (data.analysis_id) sessionStorage.setItem("analysisId", data.analysis_id);
-    } catch (err) {
-      setMessages((prev) => [...prev, { role: 'llm', type: 'text', content: 'Error analyzing file: ' + err.message }]);
+  const file = e.target.files[0];
+  if (!file) return;
+  setMessages((prev) => [...prev, { role: 'user', type: 'image', content: file }]);
+  setImageUploaded(true);
+  setIsAwaiting(true);
+
+  try {
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const res = await fetch(`${API_BASE_URL}/api/analyze/`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const errData = await res.json();
+      throw new Error(errData.error || "Failed to analyze file");
     }
-    setIsAwaiting(false);
-  };
+
+    const data = await res.json();
+
+    let fullOutput = '';
+    if (data.analysis) {
+      fullOutput = typeof data.analysis === 'string'
+        ? data.analysis
+        : JSON.stringify(data.analysis, null, 2);
+    } else {
+      fullOutput = JSON.stringify(data, null, 2);
+    }
+
+    setMessages((prev) => {
+      const idx = prev.length;
+      setTimeout(() => startTypingEffect(fullOutput, idx, 'markdown'), 100);
+      return [...prev, { role: 'llm', type: 'markdown', content: '' }];
+    });
+
+    // ✅ These should be conditional
+    if (data.analysis_id) {
+      setAnalysisId(data.analysis_id);
+      sessionStorage.setItem("analysisId", data.analysis_id);
+    }
+
+    if (data.summary) {
+      sessionStorage.setItem("analysisResult", data.summary);
+    }
+
+    sessionStorage.setItem("analysisFull", JSON.stringify(data));
+  } catch (err) {
+    setMessages((prev) => [
+      ...prev,
+      { role: 'llm', type: 'text', content: 'Error analyzing file: ' + err.message }
+    ]);
+  }
+
+  setIsAwaiting(false);
+};
+
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -97,7 +117,7 @@ const ChatApp = () => {
         setIsAwaiting(false);
         return;
       }
-      const res = await fetch(`${API_BASE_URL}/chat/`, {
+      const res = await fetch(`${API_BASE_URL}/api/chat/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -105,6 +125,7 @@ const ChatApp = () => {
           question: input,
           history,
         }),
+        credentials: 'include',
       });
       const data = await res.json();
       if (data.answer) {
@@ -181,7 +202,7 @@ const ChatApp = () => {
           <div className="flex justify-center items-center min-h-[24rem]">
             <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-500 rounded-lg cursor-pointer bg-gray-600 transition-colors text-white shadow-lg">
               <svg className="w-10 h-10 mb-2 text-neutral-400" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5V19a2.003 2.003 0 002 2h14a2.003 2.003 0 002-2v-2.5M16 10l-4-4m0 0l-4 4m4-4v12" /></svg>
-              <span className="text-neutral-400">Click to upload nutrient label or ingredients image</span>
+              <span className="text-neutral-400">Click to upload ingredients image</span>
               <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleImageUpload} />
             </label>
           </div>
@@ -192,7 +213,7 @@ const ChatApp = () => {
               {msg.type === 'image' ? (
                 <img
                   src={typeof msg.content === 'string' ? msg.content : URL.createObjectURL(msg.content)}
-                  alt="Uploaded nutrient label"
+                  alt="Uploaded ingredient list"
                   className="max-w-[200px] max-h-[200px] rounded-lg border border-neutral-700 shadow-lg bg-black"
                 />
               ) : msg.type === 'markdown' ? (
@@ -207,7 +228,7 @@ const ChatApp = () => {
           <div className="flex justify-start">
             <div className="max-w-xs md:max-w-md px-4 py-2 rounded-2xl shadow-md
              bg-neutral-900 text-neutral-400 border border-neutral-800 animate-pulse">
-              Analysing...
+              ...
             </div>
           </div>
         )}

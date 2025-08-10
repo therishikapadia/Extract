@@ -32,8 +32,11 @@ class FoodAnalyzerService:
                 top_p=0.9,
             )
             
-            prompt_template = """
-You are a certified nutritionist and food safety expert. Your task is to analyze a food label and provide a detailed health assessment, including specific, practical dietary advice for a general consumer.
+            prompt_template = """You are a certified nutritionist and food safety expert. Your task is to analyze a food label and provide a detailed health assessment, including specific, practical dietary advice for a general consumer.
+
+First, generate a short, clear **TITLE** summarizing the food item or the main concern (3–8 words). Do not include this title in your main response — it's for internal use only.
+
+---
 
 ### 🧾 EXTRACTED TEXT:
 {extracted_text}
@@ -46,7 +49,7 @@ You are a certified nutritionist and food safety expert. Your task is to analyze
 
 ---
 
-### 🧠 Your Response Format:
+### 🎯 Your Response Format:
 
 **RECOMMENDATION:** [EAT / AVOID / MODERATE]
 
@@ -74,7 +77,6 @@ You are a certified nutritionist and food safety expert. Your task is to analyze
 - 3–4: Poor — several concerns, eat rarely
 - 1–2: Unhealthy — avoid due to serious nutritional issues
 """
-
             
             self.prompt = PromptTemplate(
                 input_variables=["extracted_text", "ingredients", "nutrition_info"],
@@ -85,7 +87,7 @@ You are a certified nutritionist and food safety expert. Your task is to analyze
             self.analysis_chain = LLMChain(
                 llm=self.llm,
                 prompt=self.prompt,
-                verbose=True
+                verbose=False
             )
             
             logger.info(f"LangChain initialized successfully with model: {self.model_name}")

@@ -6,7 +6,7 @@ import { HeroHighlightDemo } from '../components/HeroSection';
 import { BentoGridThirdDemo } from '../components/BentoGrid'; // Add this import
 
 const navItems = [
-  { name: "Home", link: "#" },
+  { name: "Home", link: "/" },
   { name: "About", link: "#" },
   { name: "Contact", link: "#" }
 ];
